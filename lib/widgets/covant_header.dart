@@ -1,0 +1,73 @@
+import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
+
+class CovantHeader extends StatelessWidget {
+  const CovantHeader({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Row(
+        children: [
+          // Logo Icon
+          SizedBox(
+            width: 28,
+            height: 28,
+            child: CustomPaint(painter: _LogoPainter()),
+          ),
+          const SizedBox(width: 8),
+          const Text(
+            'COVANT',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: AppTheme.navy,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LogoPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = AppTheme.navy
+      ..style = PaintingStyle.fill;
+
+    // Draw stacked layers icon
+    final path = Path();
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+
+    // Top layer
+    path.moveTo(cx, cy - 8);
+    path.lineTo(cx - 12, cy - 2);
+    path.lineTo(cx, cy + 4);
+    path.lineTo(cx + 12, cy - 2);
+    path.close();
+    canvas.drawPath(path, paint);
+
+    // Middle layer (stroke)
+    final strokePaint = Paint()
+      ..color = AppTheme.navy
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+    canvas.drawLine(Offset(cx - 12, cy + 2), Offset(cx, cy + 8), strokePaint);
+    canvas.drawLine(Offset(cx, cy + 8), Offset(cx + 12, cy + 2), strokePaint);
+
+    // Bottom layer
+    canvas.drawLine(Offset(cx - 12, cy + 6), Offset(cx, cy + 12), strokePaint);
+    canvas.drawLine(Offset(cx, cy + 12), Offset(cx + 12, cy + 6), strokePaint);
+
+    // Blue dot
+    canvas.drawCircle(Offset(cx, cy - 4), 2.5, Paint()..color = AppTheme.blue);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
