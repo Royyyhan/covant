@@ -93,6 +93,18 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildPartnerLogo(String name) {
+    if (name == 'POLINEMA') {
+      return Image.asset(
+        'lib/asset/foto/Logo_Polinema.png',
+        height: 28,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => _textLogo('POLINEMA'),
+      );
+    }
+    return _textLogo(name);
+  }
+
+  Widget _textLogo(String name) {
     return Opacity(
       opacity: 0.5,
       child: Container(

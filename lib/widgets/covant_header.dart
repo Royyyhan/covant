@@ -10,20 +10,28 @@ class CovantHeader extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: Row(
         children: [
-          // Logo Icon
-          SizedBox(
-            width: 28,
-            height: 28,
-            child: CustomPaint(painter: _LogoPainter()),
-          ),
-          const SizedBox(width: 8),
-          const Text(
-            'COVANT',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppTheme.navy,
-              letterSpacing: 0.5,
+          Image.asset(
+            'lib/asset/foto/CovAnt.png',
+            height: 36,
+            fit: BoxFit.contain,
+            errorBuilder: (context, error, stackTrace) => Row(
+              children: [
+                SizedBox(
+                  width: 28,
+                  height: 28,
+                  child: CustomPaint(painter: _LogoPainter()),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'COVANT',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppTheme.navy,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
             ),
           ),
         ],

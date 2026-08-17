@@ -92,12 +92,17 @@ class AboutScreen extends StatelessWidget {
             // Polinema
             _buildCollabCard(
               child: Center(
-                child: Column(
-                  children: [
-                    Icon(Icons.school, size: 40, color: AppTheme.navy.withValues(alpha: 0.7)),
-                    const SizedBox(height: 4),
-                    const Text('POLINEMA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.navy)),
-                  ],
+                child: Image.asset(
+                  'lib/asset/foto/Logo_Polinema.png',
+                  height: 48,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => Column(
+                    children: [
+                      Icon(Icons.school, size: 40, color: AppTheme.navy.withValues(alpha: 0.7)),
+                      const SizedBox(height: 4),
+                      const Text('POLINEMA', style: TextStyle(fontSize: 10, fontWeight: FontWeight.w700, color: AppTheme.navy)),
+                    ],
+                  ),
                 ),
               ),
             ),
