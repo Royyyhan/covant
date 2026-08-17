@@ -37,7 +37,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   void _initVideo() {
-    _videoController = VideoPlayerController.asset('lib/aset_vidio/ANIMASI TOWER [49AF239].mp4')
+    _videoController = VideoPlayerController.asset('assets/videos/animasi_tower.mp4')
       ..initialize().then((_) {
         if (mounted) {
           setState(() {
@@ -48,7 +48,20 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
           _videoController.play();
         }
       }).catchError((error) {
-        debugPrint('Video init error: $error');
+        debugPrint('First video init error: $error. Trying fallback...');
+        _videoController = VideoPlayerController.asset('lib/aset_vidio/ANIMASI TOWER [49AF239].mp4')
+          ..initialize().then((_) {
+            if (mounted) {
+              setState(() {
+                _isVideoInitialized = true;
+              });
+              _videoController.setLooping(true);
+              _videoController.setVolume(0.0);
+              _videoController.play();
+            }
+          }).catchError((err) {
+            debugPrint('Fallback video error: $err');
+          });
       });
   }
 
