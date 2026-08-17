@@ -93,12 +93,21 @@ class HomeScreen extends StatelessWidget {
   }
 
   Widget _buildPartnerLogo(String name) {
+    String? assetPath;
     if (name == 'POLINEMA') {
+      assetPath = 'lib/asset/foto/Logo_Polinema.png';
+    } else if (name == 'POCAGROUP') {
+      assetPath = 'lib/asset/foto/logo_poca.png';
+    } else if (name == 'PENS') {
+      assetPath = 'lib/asset/foto/logo_pens.png';
+    }
+
+    if (assetPath != null) {
       return Image.asset(
-        'lib/asset/foto/Logo_Polinema.png',
+        assetPath,
         height: 28,
         fit: BoxFit.contain,
-        errorBuilder: (context, error, stackTrace) => _textLogo('POLINEMA'),
+        errorBuilder: (context, error, stackTrace) => _textLogo(name),
       );
     }
     return _textLogo(name);

@@ -64,27 +64,34 @@ class AboutScreen extends StatelessWidget {
 
             // POCAGROUP
             _buildCollabCard(
-              child: Row(
-                children: [
-                  Container(
-                    width: 28, height: 28,
-                    decoration: BoxDecoration(
-                      color: AppTheme.navy,
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: const Center(
-                      child: Text('POCA', style: TextStyle(fontSize: 6, fontWeight: FontWeight.w700, color: Colors.white)),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      Text('POCAGROUP', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.navy)),
-                      Text('PALING INDONESIA', style: TextStyle(fontSize: 9, color: AppTheme.gray400, letterSpacing: 2)),
+              child: Center(
+                child: Image.asset(
+                  'lib/asset/foto/logo_poca.png',
+                  height: 48,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => Row(
+                    children: [
+                      Container(
+                        width: 28, height: 28,
+                        decoration: BoxDecoration(
+                          color: AppTheme.navy,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: const Center(
+                          child: Text('POCA', style: TextStyle(fontSize: 6, fontWeight: FontWeight.w700, color: Colors.white)),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text('POCAGROUP', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: AppTheme.navy)),
+                          Text('PALING INDONESIA', style: TextStyle(fontSize: 9, color: AppTheme.gray400, letterSpacing: 2)),
+                        ],
+                      ),
                     ],
                   ),
-                ],
+                ),
               ),
             ),
             const SizedBox(height: 12),
@@ -111,12 +118,17 @@ class AboutScreen extends StatelessWidget {
             // PENS
             _buildCollabCard(
               child: Center(
-                child: Column(
-                  children: [
-                    Icon(Icons.hub, size: 40, color: AppTheme.navy.withValues(alpha: 0.7)),
-                    const SizedBox(height: 4),
-                    const Text('pens', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.navy)),
-                  ],
+                child: Image.asset(
+                  'lib/asset/foto/logo_pens.png',
+                  height: 48,
+                  fit: BoxFit.contain,
+                  errorBuilder: (context, error, stackTrace) => Column(
+                    children: [
+                      Icon(Icons.hub, size: 40, color: AppTheme.navy.withValues(alpha: 0.7)),
+                      const SizedBox(height: 4),
+                      const Text('pens', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700, color: AppTheme.navy)),
+                    ],
+                  ),
                 ),
               ),
             ),
