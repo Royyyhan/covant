@@ -12,71 +12,95 @@ class CalculatorScreen extends StatefulWidget {
 }
 
 class _CalculatorScreenState extends State<CalculatorScreen> {
-  int _selectedFreq = 900;
-  final _gainController = TextEditingController(text: '30');
-  final _heightController = TextEditingController(text: '1.5');
-  final _distanceController = TextEditingController(text: '5');
-  String _envType = 'urban-small';
-  double _maplValue = 147;
-  double _distanceDisplay = 4.5;
+  // Input Utama
+  final _tinggiController = TextEditingController();
+  final _frekuensiController = TextEditingController();
+  final _gainController = TextEditingController();
 
-  final Map<String, String> _envLabels = {
-    'urban-small': 'Urban (Small/Medium City)',
-    'urban-large': 'Urban (Large City)',
-    'suburban': 'Suburban',
-    'open': 'Open Area',
-  };
+  // Input Parameter Tambahan (Default value)
+  final _txPowerController = TextEditingController(text: '46');
+  final _lossKabelController = TextEditingController(text: '2');
+  final _targetRslController = TextEditingController(text: '-90');
 
-  void _computePathLoss() {
-    final freq = _selectedFreq.toDouble();
-    final hm = double.tryParse(_heightController.text) ?? 1.5;
-    final distance = double.tryParse(_distanceController.text) ?? 5;
+  String _hasil = 'Hasil jangkauan akan muncul di sini.';
+  double? _calculatedDistance;
+  double? _calculatedMapl;
 
-    // Correction factor a(hm)
-    double ahm;
-    if (_envType == 'urban-large' && freq >= 1500) {
-      ahm = 3.2 * pow(log(11.75 * hm) / ln10, 2) - 4.97;
-    } else if (_envType == 'urban-large') {
-      ahm = 8.29 * pow(log(1.54 * hm) / ln10, 2) - 1.1;
+  double _log10(num x) => log(x) / ln10;
+
+  void _hitungJangkauanUniversal() {
+    // Konversi semua input menjadi angka desimal
+    final ht = double.tryParse(_tinggiController.text);
+    final f = double.tryParse(_frekuensiController.text);
+    final gt = double.tryParse(_gainController.text);
+    final pTx = double.tryParse(_txPowerController.text);
+    final lMisc = double.tryParse(_lossKabelController.text);
+    final rsl = double.tryParse(_targetRslController.text);
+
+    // Validasi: Pastikan tidak ada yang kosong atau format salah
+    if (ht == null || f == null || gt == null || pTx == null || lMisc == null || rsl == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Harap isi semua parameter dengan angka yang valid!'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     } else {
-      ahm = (1.1 * log(freq) / ln10 - 0.7) * hm - (1.56 * log(freq) / ln10 - 0.8);
+      // 1. Hitung MAPL (Maximum Allowable Path Loss)
+      final mapl = pTx + gt - lMisc - rsl;
+
+      double logD = 0.0;
+      String modelName = "";
+
+      // 2. Pemilihan Model Propagasi Universal
+      if (f <= 1500.0) {
+        modelName = "Okumura-Hata";
+        final konstanta = 69.55 + (26.16 * _log10(f)) - (13.82 * _log10(ht));
+        final pembagi = 44.9 - (6.55 * _log10(ht));
+        logD = (mapl - konstanta) / pembagi;
+      } else {
+        modelName = "COST-231 Hata";
+        const cm = 0.0; // Asumsi environment Urban
+        final konstanta = 46.3 + (33.9 * _log10(f)) - (13.82 * _log10(ht)) + cm;
+        final pembagi = 44.9 - (6.55 * _log10(ht));
+        logD = (mapl - konstanta) / pembagi;
+      }
+
+      // 3. Konversi logaritma ke Jarak (Kilometer)
+      final jarakKm = pow(10.0, logD).toDouble();
+
+      // 4. Format Output
+      final hasilFormat = jarakKm.toStringAsFixed(2);
+      final maplFormat = mapl.toStringAsFixed(1);
+
+      setState(() {
+        _hasil =
+            "Propagasi: $modelName (Urban)\nBatas Redaman (MAPL): $maplFormat dB\n\nEstimasi Jarak Jangkauan:\n$hasilFormat Kilometer";
+        _calculatedDistance = jarakKm;
+        _calculatedMapl = mapl;
+      });
+
+      // Simpan ke riwayat perhitungan
+      CalculationHistory.addEntry(HistoryEntry(
+        frequency: f.toInt(),
+        gainAntenna: gt,
+        heightAntenna: ht,
+        envType: '$modelName (Urban)',
+        distance: double.parse(hasilFormat),
+        mapl: mapl.round(),
+        date: DateTime.now(),
+      ));
     }
-
-    // Base path loss (urban)
-    const hb = 30.0;
-    final logF = log(freq) / ln10;
-    final logHb = log(hb) / ln10;
-    double pathLoss = 69.55 + 26.16 * logF - 13.82 * logHb - ahm + (44.9 - 6.55 * logHb) * (log(distance) / ln10);
-
-    // Environment correction
-    if (_envType == 'suburban') {
-      pathLoss -= 2 * pow(log(freq / 28) / ln10, 2) + 5.4;
-    } else if (_envType == 'open') {
-      pathLoss -= 4.78 * pow(logF, 2) + 18.33 * logF - 40.94;
-    }
-
-    setState(() {
-      _maplValue = pathLoss.roundToDouble();
-      _distanceDisplay = distance;
-    });
-
-    // Save to history
-    CalculationHistory.addEntry(HistoryEntry(
-      frequency: _selectedFreq,
-      gainAntenna: double.tryParse(_gainController.text) ?? 30,
-      heightAntenna: hm,
-      envType: _envType,
-      distance: distance,
-      mapl: pathLoss.round(),
-      date: DateTime.now(),
-    ));
   }
 
   @override
   void dispose() {
+    _tinggiController.dispose();
+    _frekuensiController.dispose();
     _gainController.dispose();
-    _heightController.dispose();
-    _distanceController.dispose();
+    _txPowerController.dispose();
+    _lossKabelController.dispose();
+    _targetRslController.dispose();
     super.dispose();
   }
 
@@ -84,199 +108,179 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   Widget build(BuildContext context) {
     return SafeArea(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+        padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             const CovantHeader(),
             const SizedBox(height: 8),
 
             const Text(
-              'Okumura-Hata Calculator',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppTheme.gray800),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Empirical formulation for predicting path loss in urban, suburban, and open areas.',
-              style: TextStyle(fontSize: 13, color: AppTheme.gray500, height: 1.5),
-            ),
-            const SizedBox(height: 24),
-
-            // Frequency
-            _buildLabel('Frequency'),
-            const SizedBox(height: 8),
-            _buildFreqSelector(),
-            const SizedBox(height: 18),
-
-            // Gain Antenna
-            _buildLabel('Gain Antenna'),
-            const SizedBox(height: 8),
-            _buildInputField(_gainController, 'dBi'),
-            const SizedBox(height: 18),
-
-            // Height Antenna
-            _buildLabel('Height Antenna'),
-            const SizedBox(height: 8),
-            _buildInputField(_heightController, 'm'),
-            const SizedBox(height: 18),
-
-            // Environment Type
-            _buildLabel('Environment Type'),
-            const SizedBox(height: 8),
-            _buildEnvDropdown(),
-            const SizedBox(height: 18),
-
-            // Target Distance
-            _buildLabel('Target Distance (km)'),
-            const SizedBox(height: 8),
-            _buildInputField(_distanceController, 'km'),
-            const SizedBox(height: 24),
-
-            // Compute Button
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton.icon(
-                onPressed: _computePathLoss,
-                icon: const Icon(Icons.calculate, size: 20),
-                label: const Text('Compute Path Loss'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.navy,
-                  foregroundColor: Colors.white,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
-                ),
+              'RF Coverage Calculator',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: AppTheme.gray800,
               ),
             ),
             const SizedBox(height: 24),
 
-            // Result Diagram
-            _buildResultDiagram(),
-            const SizedBox(height: 16),
+            // 1. Input Tinggi Antena
+            _buildOutlinedTextField(
+              controller: _tinggiController,
+              label: 'Tinggi Antena (Meter)',
+            ),
+            const SizedBox(height: 12),
+
+            // 2. Input Frekuensi
+            _buildOutlinedTextField(
+              controller: _frekuensiController,
+              label: 'Frekuensi (MHz)',
+            ),
+            const SizedBox(height: 12),
+
+            // 3. Input Gain Antena
+            _buildOutlinedTextField(
+              controller: _gainController,
+              label: 'Gain Antena (dBi)',
+            ),
+            const SizedBox(height: 12),
+
+            const Divider(height: 24, thickness: 1),
+            const SizedBox(height: 12),
+
+            // 4. Input Tx Power
+            _buildOutlinedTextField(
+              controller: _txPowerController,
+              label: 'Tx Power Radio (dBm)',
+            ),
+            const SizedBox(height: 12),
+
+            // 5. Input Loss Kabel
+            _buildOutlinedTextField(
+              controller: _lossKabelController,
+              label: 'System/Cable Loss (dB)',
+            ),
+            const SizedBox(height: 12),
+
+            // 6. Input Target RSL
+            _buildOutlinedTextField(
+              controller: _targetRslController,
+              label: 'Target RSL / Rx Level (dBm)',
+            ),
+            const SizedBox(height: 24),
+
+            // Tombol Hitung
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                onPressed: _hitungJangkauanUniversal,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.navy,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  textStyle: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                child: const Text('Hitung Jangkauan Universal'),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Card untuk menampilkan hasil agar lebih rapi
+            Card(
+              elevation: 0,
+              color: AppTheme.gray100,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+                side: const BorderSide(color: AppTheme.gray200),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: Text(
+                    _hasil,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: AppTheme.gray800,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            if (_calculatedDistance != null) ...[
+              const SizedBox(height: 24),
+              _buildResultDiagram(_calculatedDistance!, _calculatedMapl ?? 0),
+            ],
+
+            const SizedBox(height: 32),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: AppTheme.gray700),
-    );
-  }
-
-  Widget _buildFreqSelector() {
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: AppTheme.gray100,
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          _buildFreqBtn(900, '900 MHz'),
-          _buildFreqBtn(1800, '1800 MHz'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFreqBtn(int freq, String label) {
-    final isActive = _selectedFreq == freq;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _selectedFreq = freq),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: isActive ? AppTheme.navy : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: isActive
-                ? [BoxShadow(color: AppTheme.navy.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 2))]
-                : null,
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: isActive ? Colors.white : AppTheme.gray500,
-              ),
-            ),
-          ),
+  Widget _buildOutlinedTextField({
+    required TextEditingController controller,
+    required String label,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: const TextStyle(color: AppTheme.gray600, fontSize: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppTheme.gray300),
         ),
-      ),
-    );
-  }
-
-  Widget _buildInputField(TextEditingController controller, String unit) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.gray200, width: 1.5),
-      ),
-      child: TextField(
-        controller: controller,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        style: const TextStyle(fontSize: 14, color: AppTheme.gray800),
-        decoration: InputDecoration(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          border: InputBorder.none,
-          suffixText: unit,
-          suffixStyle: const TextStyle(fontSize: 12, color: AppTheme.gray400, fontWeight: FontWeight.w500),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppTheme.gray300),
         ),
-      ),
-    );
-  }
-
-  Widget _buildEnvDropdown() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppTheme.gray200, width: 1.5),
-      ),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _envType,
-          isExpanded: true,
-          icon: const Icon(Icons.expand_more, color: AppTheme.gray400),
-          style: const TextStyle(fontSize: 14, color: AppTheme.gray800, fontFamily: 'Inter'),
-          items: _envLabels.entries.map((e) {
-            return DropdownMenuItem(value: e.key, child: Text(e.value));
-          }).toList(),
-          onChanged: (v) => setState(() => _envType = v!),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppTheme.navy, width: 2),
         ),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       ),
     );
   }
 
-  Widget _buildResultDiagram() {
+  Widget _buildResultDiagram(double distance, double mapl) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.gray100),
+        border: Border.all(color: AppTheme.gray200),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
         children: [
-          // Tower → Distance → City diagram
           SizedBox(
             height: 100,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                // Tower
                 SizedBox(
                   width: 60,
                   child: CustomPaint(
@@ -284,7 +288,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                     painter: _TowerPainter(),
                   ),
                 ),
-                // Distance line
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -293,13 +296,16 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
                       Container(height: 2, color: AppTheme.navy),
                       const SizedBox(height: 4),
                       Text(
-                        '${_distanceDisplay.toStringAsFixed(1)} km',
-                        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700, color: AppTheme.navy),
+                        '${distance.toStringAsFixed(2)} km',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.navy,
+                        ),
                       ),
                     ],
                   ),
                 ),
-                // Buildings
                 SizedBox(
                   width: 70,
                   child: Row(
@@ -321,23 +327,6 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
-          const Divider(height: 1, color: AppTheme.gray100),
-          const SizedBox(height: 16),
-          // MAPL result
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              const Text('MAPL: ', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.gray500)),
-              Text(
-                '${_maplValue.round()}',
-                style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: AppTheme.navy),
-              ),
-              const Text(' dB', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.gray500)),
-            ],
-          ),
         ],
       ),
     );
@@ -347,9 +336,9 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     return Container(
       width: w,
       height: h,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppTheme.gray300,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(2)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(2)),
       ),
     );
   }
@@ -365,26 +354,19 @@ class _TowerPainter extends CustomPainter {
 
     final cx = size.width / 2;
 
-    // Main pole
     canvas.drawLine(Offset(cx, 10), Offset(cx, size.height), paint);
-
-    // Upper arms
     canvas.drawLine(Offset(cx - 10, 20), Offset(cx, 10), paint..strokeWidth = 1.5);
     canvas.drawLine(Offset(cx + 10, 20), Offset(cx, 10), paint);
-
-    // Mid supports
     canvas.drawLine(Offset(cx - 15, size.height * 0.7), Offset(cx, size.height * 0.45), paint..strokeWidth = 2);
     canvas.drawLine(Offset(cx + 15, size.height * 0.7), Offset(cx, size.height * 0.45), paint);
-
-    // Base
     canvas.drawLine(Offset(cx - 20, size.height), Offset(cx, size.height * 0.65), paint);
     canvas.drawLine(Offset(cx + 20, size.height), Offset(cx, size.height * 0.65), paint);
 
-    // Top dot
-    final dotPaint = Paint()..color = AppTheme.blue..style = PaintingStyle.fill;
+    final dotPaint = Paint()
+      ..color = AppTheme.blue
+      ..style = PaintingStyle.fill;
     canvas.drawCircle(Offset(cx, 8), 4, dotPaint);
 
-    // Signal waves
     final wavePaint = Paint()
       ..color = AppTheme.blue.withValues(alpha: 0.3)
       ..style = PaintingStyle.stroke
@@ -404,3 +386,4 @@ class _TowerPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
