@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
 import '../theme/app_theme.dart';
 import '../widgets/covant_header.dart';
 import '../models/calculation_history.dart';
@@ -25,6 +26,31 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   String _hasil = 'Hasil jangkauan akan muncul di sini.';
   double? _calculatedDistance;
   double? _calculatedMapl;
+
+  late VideoPlayerController _videoController;
+  bool _isVideoInitialized = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _initVideo();
+  }
+
+  void _initVideo() {
+    _videoController = VideoPlayerController.asset('lib/aset_vidio/ANIMASI TOWER [49AF239].mp4')
+      ..initialize().then((_) {
+        if (mounted) {
+          setState(() {
+            _isVideoInitialized = true;
+          });
+          _videoController.setLooping(true);
+          _videoController.setVolume(0.0);
+          _videoController.play();
+        }
+      }).catchError((error) {
+        debugPrint('Video init error: $error');
+      });
+  }
 
   double _log10(num x) => log(x) / ln10;
 
@@ -95,6 +121,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
   @override
   void dispose() {
+    _videoController.dispose();
     _tinggiController.dispose();
     _frekuensiController.dispose();
     _gainController.dispose();
@@ -261,7 +288,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
   Widget _buildResultDiagram(double distance, double mapl) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -276,114 +303,42 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       ),
       child: Column(
         children: [
-          SizedBox(
-            height: 100,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                SizedBox(
-                  width: 60,
-                  child: CustomPaint(
-                    size: const Size(60, 100),
-                    painter: _TowerPainter(),
-                  ),
-                ),
-                Expanded(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 20),
-                      Container(height: 2, color: AppTheme.navy),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${distance.toStringAsFixed(2)} km',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.navy,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  width: 70,
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _building(12, 30),
-                      const SizedBox(width: 3),
-                      _building(14, 45),
-                      const SizedBox(width: 3),
-                      _building(10, 35),
-                      const SizedBox(width: 3),
-                      _building(16, 55),
-                      const SizedBox(width: 3),
-                      _building(12, 25),
-                    ],
-                  ),
-                ),
-              ],
+          if (_isVideoInitialized)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: AspectRatio(
+                aspectRatio: _videoController.value.aspectRatio > 0
+                    ? _videoController.value.aspectRatio
+                    : 16 / 9,
+                child: VideoPlayer(_videoController),
+              ),
+            )
+          else
+            Container(
+              height: 160,
+              alignment: Alignment.center,
+              child: const CircularProgressIndicator(color: AppTheme.navy),
+            ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppTheme.blueLight,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Estimasi Jangkauan: ${distance.toStringAsFixed(2)} km',
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: AppTheme.navy,
+              ),
             ),
           ),
         ],
       ),
     );
   }
-
-  Widget _building(double w, double h) {
-    return Container(
-      width: w,
-      height: h,
-      decoration: const BoxDecoration(
-        color: AppTheme.gray300,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(2)),
-      ),
-    );
-  }
 }
 
-class _TowerPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = AppTheme.navy
-      ..strokeWidth = 2.5
-      ..style = PaintingStyle.stroke;
-
-    final cx = size.width / 2;
-
-    canvas.drawLine(Offset(cx, 10), Offset(cx, size.height), paint);
-    canvas.drawLine(Offset(cx - 10, 20), Offset(cx, 10), paint..strokeWidth = 1.5);
-    canvas.drawLine(Offset(cx + 10, 20), Offset(cx, 10), paint);
-    canvas.drawLine(Offset(cx - 15, size.height * 0.7), Offset(cx, size.height * 0.45), paint..strokeWidth = 2);
-    canvas.drawLine(Offset(cx + 15, size.height * 0.7), Offset(cx, size.height * 0.45), paint);
-    canvas.drawLine(Offset(cx - 20, size.height), Offset(cx, size.height * 0.65), paint);
-    canvas.drawLine(Offset(cx + 20, size.height), Offset(cx, size.height * 0.65), paint);
-
-    final dotPaint = Paint()
-      ..color = AppTheme.blue
-      ..style = PaintingStyle.fill;
-    canvas.drawCircle(Offset(cx, 8), 4, dotPaint);
-
-    final wavePaint = Paint()
-      ..color = AppTheme.blue.withValues(alpha: 0.3)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    for (int i = 1; i <= 3; i++) {
-      final r = 8.0 + i * 8;
-      canvas.drawArc(
-        Rect.fromCircle(center: Offset(cx, 8), radius: r),
-        -pi * 0.7,
-        pi * 0.4,
-        false,
-        wavePaint..color = AppTheme.blue.withValues(alpha: 0.4 - i * 0.1),
-      );
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
 
