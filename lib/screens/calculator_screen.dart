@@ -37,32 +37,49 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   void _initVideo() {
-    _videoController = VideoPlayerController.asset('assets/videos/animasi_tower.mp4')
-      ..initialize().then((_) {
-        if (mounted) {
-          setState(() {
-            _isVideoInitialized = true;
-          });
-          _videoController.setLooping(true);
-          _videoController.setVolume(0.0);
-          _videoController.play();
-        }
-      }).catchError((error) {
-        debugPrint('First video init error: $error. Trying fallback...');
-        _videoController = VideoPlayerController.asset('lib/aset_vidio/ANIMASI TOWER [49AF239].mp4')
-          ..initialize().then((_) {
-            if (mounted) {
-              setState(() {
-                _isVideoInitialized = true;
-              });
-              _videoController.setLooping(true);
-              _videoController.setVolume(0.0);
-              _videoController.play();
-            }
-          }).catchError((err) {
-            debugPrint('Fallback video error: $err');
-          });
-      });
+    final List<String> paths = [
+      'lib/asset/vidio/ANIMASI_TOWER.mp4',
+      'assets/videos/animasi_tower.mp4',
+    ];
+
+    void tryLoadPath(int index) {
+      if (index >= paths.length) {
+        debugPrint('Failed to load video from all candidate paths.');
+        return;
+      }
+      final path = paths[index];
+      debugPrint('Attempting to initialize VideoPlayer with asset: $path');
+      _videoController = VideoPlayerController.asset(path)
+        ..initialize()
+            .then((_) {
+              if (mounted) {
+                _videoController.setLooping(true);
+                _videoController.setVolume(0.0);
+                _videoController.play();
+                _videoController.addListener(() {
+                  if (mounted && _videoController.value.isInitialized) {
+                    // Force replay if video ends
+                    if (!_videoController.value.isPlaying &&
+                        _videoController.value.position >=
+                            _videoController.value.duration) {
+                      _videoController.seekTo(Duration.zero);
+                      _videoController.play();
+                    }
+                  }
+                });
+                setState(() {
+                  _isVideoInitialized = true;
+                });
+                debugPrint('Successfully loaded video from: $path');
+              }
+            })
+            .catchError((error) {
+              debugPrint('Error loading video from $path: $error');
+              tryLoadPath(index + 1);
+            });
+    }
+
+    tryLoadPath(0);
   }
 
   double _log10(num x) => log(x) / ln10;
@@ -77,7 +94,12 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     final rsl = double.tryParse(_targetRslController.text);
 
     // Validasi: Pastikan tidak ada yang kosong atau format salah
-    if (ht == null || f == null || gt == null || pTx == null || lMisc == null || rsl == null) {
+    if (ht == null ||
+        f == null ||
+        gt == null ||
+        pTx == null ||
+        lMisc == null ||
+        rsl == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Harap isi semua parameter dengan angka yang valid!'),
@@ -120,15 +142,17 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       });
 
       // Simpan ke riwayat perhitungan
-      CalculationHistory.addEntry(HistoryEntry(
-        frequency: f.toInt(),
-        gainAntenna: gt,
-        heightAntenna: ht,
-        envType: '$modelName (Urban)',
-        distance: double.parse(hasilFormat),
-        mapl: mapl.round(),
-        date: DateTime.now(),
-      ));
+      CalculationHistory.addEntry(
+        HistoryEntry(
+          frequency: f.toInt(),
+          gainAntenna: gt,
+          heightAntenna: ht,
+          envType: '$modelName (Urban)',
+          distance: double.parse(hasilFormat),
+          mapl: mapl.round(),
+          date: DateTime.now(),
+        ),
+      );
     }
   }
 
@@ -276,7 +300,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }) {
     return TextField(
       controller: controller,
-      keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
+      keyboardType: const TextInputType.numberWithOptions(
+        decimal: true,
+        signed: true,
+      ),
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(color: AppTheme.gray600, fontSize: 14),
@@ -294,7 +321,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         ),
         filled: true,
         fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 14,
+        ),
       ),
     );
   }
@@ -317,24 +347,37 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       child: Column(
         children: [
           if (_isVideoInitialized)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: AspectRatio(
-                aspectRatio: _videoController.value.aspectRatio > 0
-                    ? _videoController.value.aspectRatio
-                    : 16 / 9,
-                child: VideoPlayer(_videoController),
+            Container(
+              constraints: const BoxConstraints(maxHeight: 250, maxWidth: 350),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: AspectRatio(
+                  aspectRatio: _videoController.value.aspectRatio > 0
+                      ? _videoController.value.aspectRatio
+                      : 16 / 9,
+                  child: VideoPlayer(_videoController),
+                ),
               ),
             )
           else
             Container(
-              height: 160,
+              height: 140,
               alignment: Alignment.center,
-              child: const CircularProgressIndicator(color: AppTheme.navy),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.cell_tower, size: 48, color: AppTheme.navy),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Memuat Animasi Coverage...',
+                    style: TextStyle(fontSize: 12, color: AppTheme.gray500),
+                  ),
+                ],
+              ),
             ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 5),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: AppTheme.blueLight,
               borderRadius: BorderRadius.circular(20),
@@ -353,5 +396,3 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
     );
   }
 }
-
-
