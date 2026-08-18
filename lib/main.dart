@@ -5,8 +5,9 @@ import 'screens/calculator_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/about_screen.dart';
 import 'theme/app_theme.dart';
+import 'models/calculation_history.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
@@ -14,6 +15,7 @@ void main() {
       statusBarIconBrightness: Brightness.dark,
     ),
   );
+  await CalculationHistory.init();
   runApp(const CovantApp());
 }
 

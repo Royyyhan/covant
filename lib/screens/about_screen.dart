@@ -32,21 +32,21 @@ class AboutScreen extends StatelessWidget {
 
             // Frontend Development
             _buildTeamGroup('Frontend Development', [
-              _TeamMember('Ahmad Dani', 'Frontend Engineer', 'https://randomuser.me/api/portraits/men/32.jpg'),
-              _TeamMember('Rina Sari', 'Frontend Engineer', 'https://randomuser.me/api/portraits/women/44.jpg'),
-              _TeamMember('Budi Pratama', 'Frontend Engineer', 'https://randomuser.me/api/portraits/men/45.jpg'),
-              _TeamMember('Siti Aminah', 'Frontend Engineer', 'https://randomuser.me/api/portraits/women/68.jpg'),
+              _TeamMember('Royhan', 'Frontend Engineer', 'https://randomuser.me/api/portraits/men/32.jpg'),
+              _TeamMember('Faiq', 'Frontend Engineer', 'https://randomuser.me/api/portraits/men/44.jpg'),
+              _TeamMember('Dafa', 'Frontend Engineer', 'https://randomuser.me/api/portraits/men/45.jpg'),
+              _TeamMember('Zikin', 'Frontend Engineer', 'https://randomuser.me/api/portraits/men/68.jpg'),
             ]),
             const SizedBox(height: 28),
 
             // Backend Development
             _buildTeamGroup('Backend Development', [
-              _TeamMember('Eko Saputra', 'Backend Engineer', 'https://randomuser.me/api/portraits/men/52.jpg'),
-              _TeamMember('Dian Lestari', 'Backend Engineer', 'https://randomuser.me/api/portraits/women/65.jpg'),
-              _TeamMember('Agus Setiawan', 'Backend Engineer', 'https://randomuser.me/api/portraits/men/67.jpg'),
-              _TeamMember('Maya Putri', 'Backend Engineer', 'https://randomuser.me/api/portraits/women/33.jpg'),
-              _TeamMember('Hendra Kusuma', 'Backend Engineer', 'https://randomuser.me/api/portraits/men/75.jpg'),
-              _TeamMember('Lina Marlina', 'Backend Engineer', 'https://randomuser.me/api/portraits/women/47.jpg'),
+              _TeamMember('Gilang', 'Backend Engineer', 'https://randomuser.me/api/portraits/men/52.jpg'),
+              _TeamMember('Arya', 'Backend Engineer', 'https://randomuser.me/api/portraits/men/65.jpg'),
+              _TeamMember('Afif', 'Backend Engineer', 'https://randomuser.me/api/portraits/men/67.jpg'),
+              _TeamMember('Nia', 'Backend Engineer', 'https://randomuser.me/api/portraits/women/33.jpg'),
+              _TeamMember('Nova', 'Backend Engineer', 'https://randomuser.me/api/portraits/women/75.jpg'),
+              _TeamMember('Catur', 'Backend Engineer', 'https://randomuser.me/api/portraits/men/47.jpg'),
             ]),
             const SizedBox(height: 32),
 

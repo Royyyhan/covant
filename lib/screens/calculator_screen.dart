@@ -84,7 +84,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
 
   double _log10(num x) => log(x) / ln10;
 
-  void _hitungJangkauanUniversal() {
+  Future<void> _hitungJangkauanUniversal() async {
     // Konversi semua input menjadi angka desimal
     final ht = double.tryParse(_tinggiController.text);
     final f = double.tryParse(_frekuensiController.text);
@@ -141,8 +141,8 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         _calculatedMapl = mapl;
       });
 
-      // Simpan ke riwayat perhitungan
-      CalculationHistory.addEntry(
+      // Simpan ke riwayat perhitungan (persisted to cache)
+      await CalculationHistory.addEntry(
         HistoryEntry(
           frequency: f.toInt(),
           gainAntenna: gt,
