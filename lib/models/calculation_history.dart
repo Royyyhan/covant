@@ -11,6 +11,12 @@ class HistoryEntry {
   final int mapl;
   final DateTime date;
 
+  // Extra fields for detail popup (recalculate steps)
+  final double? ptxWatt;
+  final double? lossKabel;
+  final double? targetRsl;
+  final double? cm;
+
   HistoryEntry({
     required this.frequency,
     required this.gainAntenna,
@@ -19,6 +25,10 @@ class HistoryEntry {
     required this.distance,
     required this.mapl,
     required this.date,
+    this.ptxWatt,
+    this.lossKabel,
+    this.targetRsl,
+    this.cm,
   });
 
   /// Convert to JSON map for persistence
@@ -30,9 +40,13 @@ class HistoryEntry {
         'distance': distance,
         'mapl': mapl,
         'date': date.toIso8601String(),
+        'ptxWatt': ptxWatt,
+        'lossKabel': lossKabel,
+        'targetRsl': targetRsl,
+        'cm': cm,
       };
 
-  /// Create from JSON map
+  /// Create from JSON map (backward-compatible with old entries)
   factory HistoryEntry.fromJson(Map<String, dynamic> json) => HistoryEntry(
         frequency: json['frequency'] as int,
         gainAntenna: (json['gainAntenna'] as num).toDouble(),
@@ -41,6 +55,10 @@ class HistoryEntry {
         distance: (json['distance'] as num).toDouble(),
         mapl: json['mapl'] as int,
         date: DateTime.parse(json['date'] as String),
+        ptxWatt: (json['ptxWatt'] as num?)?.toDouble(),
+        lossKabel: (json['lossKabel'] as num?)?.toDouble(),
+        targetRsl: (json['targetRsl'] as num?)?.toDouble(),
+        cm: (json['cm'] as num?)?.toDouble(),
       );
 }
 

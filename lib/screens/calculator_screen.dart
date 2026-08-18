@@ -193,6 +193,10 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         distance: double.parse(jarakKm.toStringAsFixed(2)),
         mapl: mapl.round(),
         date: DateTime.now(),
+        ptxWatt: ptxWatt,
+        lossKabel: lMisc,
+        targetRsl: rsl,
+        cm: _cm,
       ),
     );
   }
@@ -214,7 +218,7 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const CovantHeader(),
             const SizedBox(height: 8),
@@ -478,25 +482,25 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Proses Hitung',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.gray800,
+              const Text(
+                'Proses Hitung',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.gray800,
+                ),
               ),
-            ),
-            const SizedBox(height: 8),
-            for (final step in _steps) _buildStepRow(step),
-          ],
+              const SizedBox(height: 8),
+              for (final step in _steps) _buildStepRow(step),
+            ],
+          ),
         ),
-      ),
-    );
-  }
+      );
+    }
 
-  Widget _buildStepRow(_CalcStep step) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+    Widget _buildStepRow(_CalcStep step) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [

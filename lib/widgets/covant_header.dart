@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../theme/app_theme.dart';
+import '../main.dart';
+
+/// Logo color matching the CovAnt logo image
+const Color _logoBlue = Color(0xFF2E3B8C);
 
 class CovantHeader extends StatelessWidget {
   const CovantHeader({super.key});
@@ -8,33 +13,35 @@ class CovantHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Row(
-        children: [
-          Image.asset(
-            'lib/asset/foto/CovAnt.png',
-            height: 36,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) => Row(
-              children: [
-                SizedBox(
-                  width: 28,
-                  height: 28,
-                  child: CustomPaint(painter: _LogoPainter()),
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  'COVANT',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.navy,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
+      child: GestureDetector(
+        onTap: () => mainNavKey.currentState?.switchToTab(0),
+        behavior: HitTestBehavior.opaque,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.asset(
+              'lib/asset/foto/CovAnt.png',
+              height: 36,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) => SizedBox(
+                width: 19,
+                height: 19,
+                child: CustomPaint(painter: _LogoPainter()),
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: 7),
+            Text(
+              'COVANT',
+              style: GoogleFonts.hankenGrotesk(
+                fontSize: 20,
+                fontWeight: FontWeight.w900,
+                color: _logoBlue,
+                letterSpacing: -1.2,
+                height: 1.5,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
